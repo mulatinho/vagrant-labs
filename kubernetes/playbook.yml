@@ -1,0 +1,25 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: copy sources.list
+      copy:
+        src: ./sources.list
+        dest: /etc/apt/sources.list
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: update packages
+      apt:
+        update_cache: yes
+
+    - name: ensure ntpd is at the latest version
+      shell: "apt-get install -y ntp vim curl"
+      notify:
+      - restart ntpd
+
+  handlers:
+    - name: restart ntpd
+      service: name=ntp state=restarted
+

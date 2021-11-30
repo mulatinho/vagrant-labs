@@ -1,0 +1,56 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+Vagrant.configure("2") do |config|
+  config.vm.box = "debian/buster64"
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  (1..2).each do |i|
+    config.vm.define "bm1pmaster#{i}" do |node|
+      node.vm.hostname = "bm1pmaster#{i}.nash"
+      node.vm.network "private_network", ip: "10.1.0.1#{i}"
+
+      node.vm.provider :libvirt do |domain|
+        domain.memory = 2048
+        domain.cpus = 2
+      end
+    end
+  end
+
+  (1..3).each do |j|
+    config.vm.define "bm1pnode#{j}" do |node|
+      node.vm.hostname = "bm1pnode#{j}.nash"
+      node.vm.network "private_network", ip: "10.1.0.2#{j}"
+
+      node.vm.provider :libvirt do |domain|
+        domain.memory = 1024
+        domain.cpus = 1
+      end
+    end
+  end
+
+  (1..2).each do |k|
+    config.vm.define "bm1prouter#{k}" do |node|
+      node.vm.hostname = "bm1prouter#{k}.nash"
+      node.vm.network "private_network", ip: "10.1.0.4#{k}"
+
+      node.vm.provider :libvirt do |domain|
+        domain.memory = 768
+        domain.cpus = 1
+      end
+    end
+  end
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "playbook.yml"
+    ansible.groups = {
+      "kubernetes" => ["bm1pmaster1", "bm1pmaster2", "bm1pnode1", "bm1pnode2", "bm1pnode3", "bm1prouter1", "bm1prouter2"],
+      "master_root" => ["bm1pmaster1"],
+      "masters" => ["bm1pmaster1", "bm1pmaster2"],
+      "workers" => ["bm1pnode1", "bm1pnode2", "bm1pnode3"],
+      "router_root" => ["bm1prouter1"],
+      "routers" => ["bm1prouter1", "bm1prouter2"],
+      "storages" => [""]
+    }
+  end
+end

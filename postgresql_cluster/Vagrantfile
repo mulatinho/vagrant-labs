@@ -1,0 +1,28 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+Vagrant.configure("2") do |config|
+  config.vm.box = "debian/buster64"
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  (1..3).each do |i|
+    config.vm.define "psql_vm#{i}" do |node|
+      node.vm.hostname = "psqlvm0#{i}"
+      #node.vm.network "public_network", ip: "192.168.121.2#{i}", bridge: "ens5", dev: "virbr0"
+      #node.vm.network "private_network", ip: "10.0.0.2#{i}"
+
+      node.vm.provider :libvirt do |domain|
+        domain.memory = 1024
+        domain.cpus = 1
+      end
+    end
+  end
+
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "playbook.yml"
+    ansible.groups = {
+      "alex-psql-cluster" => ["psql_vm1", "psql_vm2", "psql_vm3"]
+    }
+  end
+end
