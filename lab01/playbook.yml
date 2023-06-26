@@ -1,0 +1,17 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: update packages
+      apt:
+        update_cache: yes
+
+    - name: ensure ntpd is at the latest version
+      shell: "apt-get install -y ntp vim curl tmux"
+      notify:
+      - restart ntpd
+
+  handlers:
+    - name: restart ntpd
+      service: name=ntp state=restarted
+

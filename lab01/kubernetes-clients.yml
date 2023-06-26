@@ -1,0 +1,91 @@
+---
+- hosts: kubernetes
+  become: true
+
+  tasks:
+    - name: "Build hosts file remote"
+      lineinfile:
+        dest=/etc/hosts
+        regexp='.*{{ item }}.remote$'
+        line="{{ hostvars[item].ansible_default_ipv4.address }} {{ item }}.remote"
+        state=present
+      with_items: "{{ groups['all'] }}"
+
+    - name: "Build hosts file internal"
+      lineinfile:
+        dest=/etc/hosts
+        regexp=".*{{ item.name }}$"
+        line="{{ item.ip }} {{ item.name }}.internal {{ item.name }}"
+        state=present
+      with_items:
+        - name: 'kubemaster1'
+          ip: '10.0.1.11'
+        - name: 'kubenode1'
+          ip: '10.0.1.12'
+        - name: 'kubenode2'
+          ip: '10.0.1.13'
+
+    - name: Install Containerd prerequisites
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - gpg
+        state: present
+        update_cache: yes
+
+    - name: Load Modules and Networking
+      command: "{{ item }}"
+      with_items:
+        - modprobe overlay
+        - modprobe br_netfilter
+        - sysctl -w net.ipv4.ip_forward=1
+
+    - name: Add Containerd GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Containerd APT repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+
+    - name: Install Containerd
+      apt:
+        name: containerd.io
+        state: present
+        update_cache: yes
+
+    - name: Containerd config
+      shell: |
+        mkdir -p /etc/containerd
+        containerd config default | tee /etc/containerd/config.toml
+        sed -ie 's/SystemdCgroup.*/SystemdCgroup = true/' /etc/containerd/config.toml
+
+    - name: Restart Containerd
+      service:
+        name: containerd
+        state: restarted
+
+    - name: Add Kubernetes APT key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    - name: Add Kubernetes APT repository
+      apt_repository:
+        repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+
+    - name: Install Kubernetes components
+      apt:
+        name:
+          - kubelet=1.24.14-00
+          - kubeadm=1.24.14-00
+          - kubectl=1.24.14-00
+        state: present
+        update_cache: yes
+        cache_valid_time: 3600
