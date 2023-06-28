@@ -1,0 +1,19 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - include_vars: variables.yml
+    - name: update packages
+      apt:
+        update_cache: yes
+
+    - name: ensure basic packages is at the latest version
+      shell: "apt-get install -y ntp vim curl tmux bridge-utils vlan tcpdump iptables"
+
+    - name: "Build hosts file internal"
+      lineinfile:
+        dest=/etc/hosts
+        regexp=".*{{ item.name }}$"
+        line="{{ item.ip }} {{ item.name }}.internal {{ item.name }}"
+        state=present
+      with_items: "{{ machines }}"

@@ -1,0 +1,12 @@
+---
+- hosts: all
+  become: true
+
+  tasks:
+    - name: "Check if HAProxy is UP"
+      wait_for:
+        host: hamaster1
+        port: 80
+        state: present
+        timeout: 2
+

@@ -1,0 +1,7 @@
+machines:
+  - name: 'kubemaster1'
+    ip: '10.0.1.11'
+  - name: 'kubenode1'
+    ip: '10.0.1.12'
+  - name: 'kubenode2'
+    ip: '10.0.1.13'

@@ -1,0 +1,38 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+Vagrant.configure("2") do |config|
+  config.vm.box = "debian/bookworm64"
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  config.vm.define "hamaster1" do |node|
+    node.vm.hostname = "hamaster1.internal"
+    node.vm.network "private_network", ip: "10.1.1.1"
+
+    node.vm.provider :libvirt do |domain|
+      domain.memory = 512
+      domain.cpus = 1
+    end
+  end
+
+  (1..3).each do |j|
+    config.vm.define "worker#{j}" do |node|
+      node.vm.hostname = "worker#{j}.internal"
+      node.vm.network "private_network", ip: "10.1.1.1#{j}"
+
+      node.vm.provider :libvirt do |domain|
+        domain.memory = 384
+        domain.cpus = 1
+      end
+    end
+  end
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "playbooks/seed.yml"
+    ansible.groups = {
+      "nodes" => ["hamaster1", "worker1", "worker2", "worker3"], 
+      "master" => ["hamaster1"],
+      "workers" => ["worker1", "worker2","worker3"],
+    }
+  end
+end

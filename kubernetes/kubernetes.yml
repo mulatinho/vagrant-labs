@@ -1,7 +1,0 @@
----
-- hosts: kubernetes
-  become: yes
-  roles:
-    - role: kubernetes
-      vars:
-        kubernetes_iface: "ens6"

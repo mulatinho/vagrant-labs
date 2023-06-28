@@ -1,0 +1,12 @@
+digraph D {
+  HAPROXY [shape=diamond]
+  CLOUD [shape=circle]
+  WORKER1 [shape=box]
+  WORKER2 [shape=box]
+  WORKER3 [shape=box]
+
+  CLOUD -> HAPROXY
+  HAPROXY -> WORKER1
+  HAPROXY -> WORKER2
+  HAPROXY -> WORKER3
+}

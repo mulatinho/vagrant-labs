@@ -1,0 +1,32 @@
+---
+- hosts: all
+  become: true
+
+  tasks:
+    - name: "Build hosts file remote"
+      lineinfile:
+        dest=/etc/hosts
+        regexp='.*{{ item }}.remote$'
+        line="{{ hostvars[item].ansible_default_ipv4.address }} {{ item }}.remote"
+        state=present
+      with_items: "{{ groups['all'] }}"
+
+    - name: Install prerequisites
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - gpg
+          - vim
+          - tmux
+          - haproxy
+        state: present
+        update_cache: yes
+
+    - name: Ensure HAPROXY is up and running
+      service:
+        name: haproxy
+        state: started
+        enabled: true
