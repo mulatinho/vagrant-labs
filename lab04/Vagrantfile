@@ -53,4 +53,13 @@ Vagrant.configure("2") do |config|
       "workers" => ["kubenode1", "kubenode2"],
     }
   end
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "kubernetes-workers.yml"
+    ansible.groups = {
+      "kubernetes" => ["kubemaster1", "kubenode1", "kubenode2"], 
+      "master_root" => ["kubemaster1"],
+      "workers" => ["kubenode1", "kubenode2"],
+    }
+  end
 end

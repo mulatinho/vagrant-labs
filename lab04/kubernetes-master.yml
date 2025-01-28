@@ -3,14 +3,21 @@
   become: true
 
   tasks:
+    - name: Check that kubeconfig file exists
+      stat:
+        path: /root/.kube/config
+      register: stat_result
+
     - name: Initialize Kubernetes master
       command: kubeadm init --apiserver-advertise-address=10.1.0.11 --pod-network-cidr=10.1.0.0/16
+      when: not stat_result.stat.exists
 
     - name: Set up kubeconfig for the user
       command: "{{ item }}"
       with_items:
         - mkdir -p $HOME/.kube
         - cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+      when: not stat_result.stat.exists
 
     - name: Install Cilium
       command: "{{ item }}"
@@ -19,3 +26,42 @@
         - tar xfzv cilium-linux-amd64.tar.gz -C /usr/local/bin/
         - rm cilium-linux-amd64.tar.gz
         - cilium install --version 1.16.6
+      retries: 3
+      delay: 10
+      when: not stat_result.stat.exists
+
+    - name: Check that token file exists for node1
+      stat:
+        path: /root/token-node1.txt
+      register: stat_result_node1
+
+    - name: Check that token file exists for node2
+      stat:
+        path: /root/token-node2.txt
+      register: stat_result_node2
+
+    - name: Run a token create command for node1
+      command: kubeadm token create --print-join-command
+      register: command_output_node1
+      when: not stat_result_node1.stat.exists
+
+    - name: Save the output to node1
+      ansible.builtin.copy:
+        content: "{{ command_output_node1.stdout }}"
+        dest: /root/token-node1.txt
+      delegate_to: "{{item}}"
+      loop: "{{ groups['kubernetes'] }}"
+      when: not stat_result_node1.stat.exists
+
+    - name: Run a token create command for node2
+      command: kubeadm token create --print-join-command
+      register: command_output_node2
+      when: not stat_result_node2.stat.exists
+
+    - name: Save the output to a local log file
+      ansible.builtin.copy:
+        content: "{{ command_output_node2.stdout }}"
+        dest: /root/token-node2.txt
+      delegate_to: "{{item}}"
+      loop: "{{ groups['kubernetes'] }}"
+      when: not stat_result_node2.stat.exists
