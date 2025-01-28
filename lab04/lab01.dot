@@ -1,0 +1,10 @@
+digraph D {
+  SERVER [shape=diamond]
+  CLOUD [shape=circle]
+  WORKER1 [shape=box]
+  WORKER2 [shape=box]
+
+  CLOUD -> SERVER
+  SERVER -> WORKER1
+  SERVER -> WORKER2
+}

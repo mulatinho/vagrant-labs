@@ -1,0 +1,48 @@
+---
+- hosts: all 
+  become: yes
+
+  tasks:
+    - name: "Build hosts file remote"
+      lineinfile:
+        dest=/etc/hosts
+        regexp='.*{{ item }}.remote$'
+        line="{{ hostvars[item].ansible_default_ipv4.address }} {{ item }}.remote"
+        state=present
+      with_items: "{{ groups['all'] }}"
+
+    - name: "Build hosts file internal"
+      lineinfile:
+        dest=/etc/hosts
+        regexp=".*{{ item.name }}$"
+        line="{{ item.ip }} {{ item.name }}.internal {{ item.name }}"
+        state=present
+      with_items:
+        - name: 'kubemaster1'
+          ip: '10.1.0.11'
+        - name: 'kubenode1'
+          ip: '10.1.0.21'
+        - name: 'kubenode2'
+          ip: '10.1.0.22'
+
+    - name: update packages
+      apt:
+        update_cache: yes
+
+    - name: Install prerequisites
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - gpg
+          - ntp
+          - vim
+          - curl
+          - tmux
+        state: present
+        update_cache: yes
+
+    - name: restart ntpd
+      service: name=ntp state=restarted

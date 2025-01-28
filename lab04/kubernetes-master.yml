@@ -1,0 +1,21 @@
+---
+- hosts: master_root
+  become: true
+
+  tasks:
+    - name: Initialize Kubernetes master
+      command: kubeadm init --apiserver-advertise-address=10.1.0.11 --pod-network-cidr=10.1.0.0/16
+
+    - name: Set up kubeconfig for the user
+      command: "{{ item }}"
+      with_items:
+        - mkdir -p $HOME/.kube
+        - cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+
+    - name: Install Cilium
+      command: "{{ item }}"
+      with_items:
+        - curl -L --fail --remote-name-all https://github.com/cilium/cilium-cli/releases/download/v0.16.23/cilium-linux-amd64.tar.gz
+        - tar xfzv cilium-linux-amd64.tar.gz -C /usr/local/bin/
+        - rm cilium-linux-amd64.tar.gz
+        - cilium install --version 1.16.6

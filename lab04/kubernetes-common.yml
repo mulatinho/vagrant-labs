@@ -1,0 +1,56 @@
+---
+- hosts: all
+  become: true
+
+  tasks:
+    - name: Load Modules and Networking
+      command: "{{ item }}"
+      with_items:
+        - modprobe overlay
+        - modprobe br_netfilter
+        - sysctl -w net.ipv4.ip_forward=1
+
+    - name: Add Containerd and Kubernetes GPG key
+      apt_key:
+        url: "{{ item }}"
+        state: present
+      with_items:
+        - https://download.docker.com/linux/debian/gpg
+        - https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        - https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key
+
+    - name: Add Containerd and Kubernetes APT repository
+      apt_repository:
+        repo: "{{ item }}"
+        state: present
+      with_items:
+        - deb [arch=amd64] https://download.docker.com/linux/debian bookworm stable
+        - deb https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /
+
+
+    - name: Install Containerd
+      apt:
+        name: containerd.io
+        state: present
+        update_cache: yes
+
+    - name: Containerd config
+      shell: |
+        mkdir -p /etc/containerd
+        containerd config default | tee /etc/containerd/config.toml
+        sed -ie 's/SystemdCgroup.*/SystemdCgroup = true/; s/pause:3.8/pause:3.10/' /etc/containerd/config.toml
+
+    - name: Restart Containerd
+      service:
+        name: containerd
+        state: restarted
+
+    - name: Install Kubernetes components
+      apt:
+        name:
+          - kubelet=1.32.1-1.1
+          - kubeadm=1.32.1-1.1
+          - kubectl=1.32.1-1.1
+        state: present
+        update_cache: yes
+        cache_valid_time: 3600
