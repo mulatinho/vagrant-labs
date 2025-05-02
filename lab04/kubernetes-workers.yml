@@ -1,0 +1,60 @@
+---
+- hosts: workers
+  become: true
+
+  tasks:
+    - name: Node01 - Waits for kubemaster1 be deployed
+      ansible.builtin.wait_for:
+        path: /root/token-node1.txt
+      when:
+        - "'kubenode1' in ansible_hostname"
+
+    - name: Node02 - Waits for kubemaster1 be deployed
+      ansible.builtin.wait_for:
+        path: /root/token-node2.txt
+      when:
+        - "'kubenode2' in ansible_hostname"
+
+    - name: Check if node1 token was executed
+      stat:
+        path: /root/.node1_join_executed
+      register: node1_join
+      when:
+        - "'kubenode1' in ansible_hostname"
+
+    - name: Grab output for node1
+      command: cat /root/token-node1.txt
+      register: token_node1
+      when:
+        - "'kubenode1' in ansible_hostname"
+
+    - name: Execute join on node1
+      command: "{{ item }}"
+      with_items:
+        - "{{ token_node1.stdout }}"
+        - touch /root/.node1_join_executed
+      when:
+        - "'kubenode1' in ansible_hostname"
+        - not node1_join.stat.exists
+
+    - name: Check if node2 token was executed
+      stat:
+        path: /root/.node2_join_executed
+      register: node2_join
+      when:
+        - "'kubenode2' in ansible_hostname"
+
+    - name: Grab output for node1
+      command: cat /root/token-node2.txt
+      register: token_node2
+      when:
+        - "'kubenode2' in ansible_hostname"
+
+    - name: Execute join on node1
+      command: "{{ item }}"
+      with_items:
+        - "{{ token_node2.stdout }}"
+        - touch /root/.node2_join_executed
+      when:
+        - "'kubenode2' in ansible_hostname"
+        - not node2_join.stat.exists

@@ -2,6 +2,8 @@
 
 A Vagrant Kubernetes cluster with one master node and two workers.
 
+![kubernetes cluster](lab04.png)
+
 ### Running
 ````
 $ vagrant up

@@ -1,0 +1,14 @@
+digraph G {
+rankdir=LR;
+  client -> ingress 
+  subgraph cluster0 {
+    style = filled;
+    color = lightgrey;
+    node [style=filled, color=white];
+    label = "kubernetes cluster";
+    
+    ingress -> kubemaster01;
+    kubemaster01 -> kubenode01;
+    kubemaster01 -> kubenode02;
+  }
+}
