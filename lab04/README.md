@@ -5,7 +5,8 @@ A Vagrant Kubernetes cluster with one master node and two workers.
 ![kubernetes cluster](lab04.png)
 
 ### Running
-````
+
+```sh
 $ vagrant up
 $ ansible-playbook -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory kubernetes-clients.yml
 $ ansible-playbook -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory kubernetes-master.yml
@@ -13,7 +14,7 @@ $ ansible-playbook -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_in
 
 ### Status
 
-```
+```sh
 $ vagrant status
 Current machine states:
 
@@ -24,7 +25,7 @@ kubenode2                 running (libvirt)
 
 Running with versions 1.24.14-00 on kubelet, kubeadm and kubectl. Calico Networking.
  
-```
+```sh
 Every 8.0s: kubectl get all -A                                                                                                                            kubemaster1: Mon Jun 26 03:00:00 2023
 
 NAMESPACE     NAME                                           READY   STATUS    RESTARTS   AGE
@@ -54,5 +55,4 @@ NAMESPACE     NAME                                                 DESIRED   CUR
 kube-system   replicaset.apps/calico-kube-controllers-79dcc699f8   1         1         1       18m
 kube-system   replicaset.apps/coredns-57575c5f89                   2         2         2       18m
 ```
-
 
